@@ -1,6 +1,8 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import pool from '../lib/db';
-import formidable from 'formidable';
+import pool from '../../lib/db';
+import formidable, { IncomingForm } from 'formidable';
+import path from 'path';
+import fs from 'fs';
 
 export const config = {
   api: {
@@ -14,7 +16,7 @@ fs.mkdirSync(uploadDir, { recursive: true });
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method === 'POST') {
-    const form = new formidable.IncomingForm();
+    const form = new IncomingForm();
     form.uploadDir = uploadDir;
     form.keepExtensions = true;
 
@@ -24,11 +26,18 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       }
 
       const file = files.file as formidable.File;
+      const validExtensions = ['.jpg', '.jpeg', '.png', '.gif'];
+      const fileExtension = path.extname(file.originalFilename).toLowerCase();
+
+      if (!validExtensions.includes(fileExtension)) {
+        return res.status(400).json({ error: 'Invalid file type' });
+      }
+
       // TODO
       const metadata = {};
 
       const query = 'INSERT INTO images (name, path, metadata) VALUES (?, ?, ?)';
-      const values = [file.name, file.path, JSON.stringify(metadata)];
+      const values = [file.originalFilename, file.filepath, JSON.stringify(metadata)];
 
       try {
         await pool.query(query, values);

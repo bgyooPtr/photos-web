@@ -8,12 +8,15 @@ const ImageUpload = () => {
   };
 
   const handleUpload = async () => {
-    if(!selectedFiles) return;
+    if (!selectedFiles) return;
 
     const formData = new FormData();
+    const validExtensions = ['image/jpeg', 'image/png', 'image/gif'];
 
     Array.from(selectedFiles).forEach(file => {
-      formData.append('file', file);
+      if (validExtensions.includes(file.type)) {
+        formData.append('file', file);
+      }
     });
 
     const response = await fetch('/api/upload', {

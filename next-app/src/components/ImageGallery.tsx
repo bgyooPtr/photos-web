@@ -4,7 +4,14 @@ const ImageGallery = () => {
   const [images, setImages] = useState([]);
 
   useEffect(() => {
-    fetch('/api/images').then(response => response.json()).then(data => setImages(data));
+    fetch('/api/images').then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      const r = response;
+      console.log(r);
+      return r.json();
+    }).then(data => setImages(data));
   }, [])
 
   return (

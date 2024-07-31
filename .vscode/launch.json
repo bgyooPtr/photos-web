@@ -2,17 +2,42 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Launch Program",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/next-app/node_modules/.bin/next",
+      "args": [
+        "dev"
+      ],
+      "cwd": "${workspaceFolder}/next-app",
+      "sourceMaps": true,
+      "console": "integratedTerminal",
+      "runtimeArgs": [
+        "--inspect"
+      ],
+      "env": {
+        "NODE_ENV": "development"
+      },
+      "serverReadyAction": {
+        "pattern": "- Local:.+(https?://.+)",
+        "uriFormat": "%s",
+        "action": "debugWithChrome"
+      }
+    },
+    {
       "name": "Next.js: debug server-side",
       "type": "node-terminal",
       "request": "launch",
       "command": "npm run dev",
-      "cwd": "${workspaceFolder}/next-app"
+      "cwd": "${workspaceFolder}/next-app",
     },
     {
       "name": "Next.js: debug client-side",
       "type": "chrome",
       "request": "launch",
-      "url": "http://localhost:3000"
+      "url": "http://localhost:3000",
+      "webRoot": "${workspaceFolder}/next-app",
+      "sourceMaps": true,
     },
     {
       "name": "Next.js: debug full stack",
