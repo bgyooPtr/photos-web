@@ -6,7 +6,9 @@
     "start": "next start"
   },
   "dependencies": {
+    "formidable": "^3.5.1",
     "image-size": "^1.1.1",
+    "mariadb": "^3.3.1",
     "next": "latest",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

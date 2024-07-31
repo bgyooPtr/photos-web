@@ -1,17 +1,14 @@
-import { useState } from 'react';
-import FolderNavigator from '../components/FolderNavigator';
 import ImageGallery from '../components/ImageGallery';
+import ImageUpload from '../components/ImageUpload';
 
-const HomePage = () => {
-  const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
-
+const Home = () => {
   return (
-    <div className="p-4">
-      <h1 className="text-2x1 font-bold mb-4">Photo Gallery</h1>
-      <FolderNavigator onSelect={setSelectedFolder} />
-      {selectedFolder && <ImageGallery folder={selectedFolder} />}
+    <div>
+      <h1>Image Gallery</h1>
+      <ImageUpload />
+      <ImageGallery />
     </div>
   );
 };
 
-export default HomePage;
+export default Home;
