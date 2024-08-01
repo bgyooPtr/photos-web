@@ -2,11 +2,10 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'fs';
 import path from 'path';
 import sizeOf from 'image-size';
-import { imageRoot } from '../config';
 
 const getImageMetadata = (req: NextApiRequest, res: NextApiResponse) => {
   const { imagePath } = req.query;
-  const fullPath = path.join(imageRoot, imagePath as string);
+  const fullPath = path.join('.', imagePath as string);
 
   fs.stat(fullPath, (err, stats) => {
     if (err) {
