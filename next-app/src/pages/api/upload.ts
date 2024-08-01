@@ -42,7 +42,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         return res.status(500).json({ error: err.message });
       }
 
-      files.file.forEach(async (file) => {
+      const uploadedFiles = Array.isArray(files.file) ? files.file : [files.file];
+
+      for (const file of uploadedFiles) {
         if (!file || !file.originalFilename || !file.filepath) {
           console.error('File upload failed:', file);
           return res.status(400).json({ error: 'File upload failed' });
@@ -65,12 +67,13 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         try {
           await pool.query(query, values);
           console.log('File successfully processed:', file.originalFilename);
-          res.status(200).json({ message: 'File uploaded successfully' });
         } catch (dbError) {
           console.error('Database error:', dbError);
           res.status(500).json({ error: 'Database error' });
         }
-      });
+      }
+      res.status(200).json({ message: 'File uploaded successfully' });
+
     });
   } else {
     res.status(405).json({ error: 'Method not allowed' });
