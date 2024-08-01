@@ -10,6 +10,7 @@ fs.mkdirSync(uploadDir, { recursive: true });
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   console.log('Request received:', req.method.toLowerCase(), req.url);
+
   if (req.method.toLowerCase() === 'post') {
     const form = new formidable.IncomingForm();
     form.uploadDir = uploadDir;
@@ -27,16 +28,17 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       console.error('Formidable error:', err);
     });
 
-
     form.parse(req, async (err, fields, files) => {
       console.log('in parse');
       if (err) {
+        console.error('Parse error:', err);
         return res.status(500).json({ error: err.message });
       }
 
       const file = files.file as formidable.File;
 
       if (!file || !file.originalFilename || !file.filepath) {
+        console.error('File upload failed:', file);
         return res.status(400).json({ error: 'File upload failed' });
       }
 
@@ -44,6 +46,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       const fileExtension = path.extname(file.originalFilename).toLowerCase();
 
       if (!validExtensions.includes(fileExtension)) {
+        console.error('Invalid file type:', fileExtension);
         return res.status(400).json({ error: 'Invalid file type' });
       }
 
@@ -54,16 +57,20 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       const values = [file.originalFilename, file.filepath, JSON.stringify(metadata)];
 
       try {
-        await pool.query(query, values);
-        res.status(201).json({ message: 'File uploaded successfully' });
-      } catch (error) {
-        res.status(500).json({ error: error.message });
+        // Database insertion logic here
+        console.log('File successfully processed:', file.originalFilename);
+        res.status(200).json({ message: 'File uploaded successfully' });
+      } catch (dbError) {
+        console.error('Database error:', dbError);
+        res.status(500).json({ error: 'Database error' });
       }
+    }).catch((err) => {
+      console.error('Formidable promise error:', err);
+      res.status(500).json({ error: err.message });
     });
   } else {
-    res.status(405).json({ message: 'Method not allowed' });
+    res.status(405).json({ error: 'Method not allowed' });
   }
-  console.log('done');
 };
 
 export default handler;

@@ -5,6 +5,7 @@ const ImageUpload = () => {
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedFiles(event.target.files);
+    console.log(event.target.files);
   };
 
   const handleUpload = async () => {
@@ -18,6 +19,9 @@ const ImageUpload = () => {
         formData.append('file', file);
       }
     });
+    for (let value of formData.values()) {
+      console.log(value);
+    }
 
     const response = await fetch('/api/upload', {
       method: 'POST',
