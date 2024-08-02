@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 
 const ImageUpload = () => {
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
@@ -12,23 +12,23 @@ const ImageUpload = () => {
     if (!selectedFiles) return;
 
     const formData = new FormData();
-    const validExtensions = ["image/jpeg", "image/png", "image/gif"];
+    // const validExtensions = ["image/jpeg", "image/png", "image/gif"];
 
     Array.from(selectedFiles).forEach((file) => {
-      if (validExtensions.includes(file.type)) {
-        formData.append("file", file);
-      }
+      // if (validExtensions.includes(file.type)) {
+      formData.append('file', file);
+      // }
     });
 
-    const response = await fetch("/api/upload", {
-      method: "POST",
+    const response = await fetch('/api/upload', {
+      method: 'POST',
       body: formData,
     });
 
     if (response.ok) {
-      alert("Upload successful");
+      alert('Upload successful');
     } else {
-      alert("Upload failed");
+      alert('Upload failed');
     }
   };
 
