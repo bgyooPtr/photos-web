@@ -48,14 +48,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           return res.status(400).json({ error: 'File upload failed' });
         }
 
-        // const validExtensions = ['.jpg', '.jpeg', '.png', '.gif'];
-        // const fileExtension = path.extname(file.originalFilename).toLowerCase();
-
-        // if (!validExtensions.includes(fileExtension)) {
-        //   console.error('Invalid file type:', fileExtension);
-        //   return res.status(400).json({ error: 'Invalid file type' });
-        // }
-
         const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
         const thumbnailsDir = path.join(uploadsDir, 'thumbnails');
 
@@ -67,7 +59,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           fs.mkdirSync(thumbnailsDir, { recursive: true });
         }
 
-        const originalFilePath = path.join(uploadsDir, file.originalFilename);
+        let fileName = file.originalFilename;
+        let filePath = path.join(uploadsDir, file.originalFilename);
         const thumbnailFilePath = path.join(
           thumbnailsDir,
           `${path.basename(file.originalFilename, path.extname(file.originalFilename))}.jpg`,
@@ -75,11 +68,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         const _tmpFilePath = path.join(uploadsDir, 'tmp.jpg');
 
         try {
-          // Save the original file
-          fs.renameSync(file.filepath, originalFilePath);
-
           // Extract metadata using exiftool
-          const metadata = await exiftool.read(originalFilePath);
+          const metadata = await exiftool.read(file.filepath);
 
           // Read the orientation
           const orientation = metadata.Orientation;
@@ -101,21 +91,38 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           }
 
           // Create and save the thumbnail
-          await exiftool.extractPreview(originalFilePath, _tmpFilePath);
+          fs.renameSync(file.filepath, _tmpFilePath);
+
+          // await exiftool.extractThumbnail(originalFilePath, _tmpFilePath);
           await sharp(_tmpFilePath)
-            .resize({ width: 300 }) // Change the width as per your configuration
+            // .resize({ width: 300 }) // Change the width as per your configuration
             .rotate(angle)
             .toFile(thumbnailFilePath);
 
+          // Check if the file is in raw format
+          const validExtensions = ['.jpg', '.jpeg', '.png', '.gif'];
+          const fileExtension = path.extname(_tmpFilePath).toLowerCase();
+
+          if (!validExtensions.includes(fileExtension)) {
+            // Load the raw file and extract the jpg
+            await exiftool.extractJpgFromRaw(file.filepath, _tmpFilePath);
+
+            // Rename the temporary file
+            fileName = `${path.parse(fileName).name}.jpg`;
+            filePath = path.join(uploadsDir, fileName);
+
+            // Save the jpg file as original file
+            await sharp(_tmpFilePath).rotate(angle).toFile(filePath);
+          }
           // Delete the temporary file
           fs.unlinkSync(_tmpFilePath);
 
           // Save file information to the database
           const query = 'INSERT INTO images (name, path, metadata) VALUES (?, ?, ?)';
-          const values = [file.originalFilename, `/uploads/${file.originalFilename}`, JSON.stringify(metadata)];
+          const values = [fileName, `/uploads/${fileName}`, JSON.stringify(metadata)];
           await pool.query(query, values);
 
-          console.log('Files saved:', { originalFilePath, thumbnailFilePath });
+          console.log('Files saved:', { originalFilePath: filePath, thumbnailFilePath });
         } catch (error) {
           console.error('Error processing file:', error);
           return res.status(500).json({ error: 'Error processing file' });

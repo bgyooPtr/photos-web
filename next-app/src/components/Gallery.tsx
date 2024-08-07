@@ -15,6 +15,7 @@ import { Image } from '../models/Image';
 import CardView from './CardView';
 import SlideView from './SlideView';
 import ImageModal from './ImageModal';
+import ImageUpload from './ImageUpload';
 
 const Gallery = () => {
   const [view, setView] = useState<'card' | 'slide'>('card');
@@ -39,6 +40,9 @@ const Gallery = () => {
         <div className="tags">
           <span className="v-icon">V</span>
           {/* Tag buttons here */}
+        </div>
+        <div>
+          <ImageUpload />
         </div>
         <div className="view-switch">
           <button onClick={() => setView('card')}>Card View</button>

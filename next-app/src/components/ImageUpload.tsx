@@ -3,10 +3,7 @@ import React, { useState } from 'react';
 const ImageUpload = () => {
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSelectedFiles(event.target.files);
-    console.log(event.target.files);
-  };
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => setSelectedFiles(event.target.files);
 
   const handleUpload = async () => {
     if (!selectedFiles) return;
@@ -20,7 +17,7 @@ const ImageUpload = () => {
       // }
     });
 
-    const response = await fetch('/api/upload', {
+    const response = await fetch('/api/uploadImages', {
       method: 'POST',
       body: formData,
     });
