@@ -5,6 +5,9 @@ FROM base AS builder
 
 WORKDIR /app
 
+# Install Perl
+RUN apk add --no-cache perl
+
 # Install dependencies based on the preferred package manager
 COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
 # Omit --production flag for TypeScript devDependencies
@@ -47,6 +50,9 @@ FROM base AS runner
 
 WORKDIR /app
 
+# Install Perl
+RUN apk add --no-cache perl
+
 # Don't run production as root
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
@@ -58,6 +64,9 @@ COPY --from=builder /app/public ./public
 # https://nextjs.org/docs/advanced-features/output-file-tracing
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Ensure the upload directory has the correct permissions
+RUN mkdir -p /app/public/uploads && chown -R nextjs:nodejs /app/public/uploads
 
 # Environment variables must be redefined at run time
 ARG ENV_VARIABLE

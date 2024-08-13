@@ -1,4 +1,4 @@
-import { exiftool } from 'exiftool-vendored';
+import { ExifTool } from 'exiftool-vendored';
 import * as formidable from 'formidable';
 import fs from 'fs';
 import { NextApiRequest, NextApiResponse } from 'next';
@@ -12,14 +12,23 @@ export const config = {
   },
 };
 
+let exiftool = new ExifTool({ taskTimeoutMillis: 5000 });
+
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   console.log('Request received:', req.method.toLowerCase(), req.url);
 
   if (req.method.toLowerCase() === 'post') {
+    const uploadDir = path.join(process.cwd(), 'public', 'uploads');
+
+    // Ensure the upload directory exists
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+
     const form = new formidable.IncomingForm({
       keepExtensions: true,
       multiples: true,
-      createDirsFromUploads: true,
+      uploadDir: uploadDir,
     });
 
     form.on('fileBegin', (name, file) => {
@@ -44,30 +53,33 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
       for (const file of uploadedFiles) {
         if (!file || !file.originalFilename || !file.filepath) {
-          console.error('File upload failed:', file);
-          return res.status(400).json({ error: 'File upload failed' });
+          continue;
         }
-
-        const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-        const thumbnailsDir = path.join(uploadsDir, 'thumbnails');
-
-        // Ensure the directories exist
-        if (!fs.existsSync(uploadsDir)) {
-          fs.mkdirSync(uploadsDir, { recursive: true });
-        }
-        if (!fs.existsSync(thumbnailsDir)) {
-          fs.mkdirSync(thumbnailsDir, { recursive: true });
-        }
-
-        let fileName = file.originalFilename;
-        let filePath = path.join(uploadsDir, file.originalFilename);
-        const thumbnailFilePath = path.join(
-          thumbnailsDir,
-          `${path.basename(file.originalFilename, path.extname(file.originalFilename))}.jpg`,
-        );
-        const _tmpFilePath = path.join(uploadsDir, 'tmp.jpg');
 
         try {
+          if (exiftool.ended) {
+            exiftool = new ExifTool({ taskTimeoutMillis: 5000 });
+          }
+
+          const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
+          const thumbnailsDir = path.join(uploadsDir, 'thumbnails');
+
+          // Ensure the directories exist
+          if (!fs.existsSync(uploadsDir)) {
+            fs.mkdirSync(uploadsDir, { recursive: true });
+          }
+          if (!fs.existsSync(thumbnailsDir)) {
+            fs.mkdirSync(thumbnailsDir, { recursive: true });
+          }
+
+          let fileName = file.originalFilename;
+          let filePath = path.join(uploadsDir, file.originalFilename);
+          const thumbnailFilePath = path.join(
+            thumbnailsDir,
+            `${path.basename(file.originalFilename, path.extname(file.originalFilename))}.jpg`,
+          );
+          const _tmpFilePath = path.join(uploadsDir, 'tmp.jpg');
+
           // Extract metadata using exiftool
           const metadata = await exiftool.read(file.filepath);
 
@@ -107,6 +119,14 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
             // Load the raw file and extract the jpg
             await exiftool.extractJpgFromRaw(file.filepath, _tmpFilePath);
 
+            // Saving file: {
+            //   fileName: 'test.png',
+            //   filePath: '/home/bgyoo/workspace/photos-web/next-app/public/uploads/test.png'
+            // }
+            // Files saved: {
+            //   originalFilePath: '/home/bgyoo/workspace/photos-web/next-app/public/uploads/test.png',
+            //   thumbnailFilePath: '/home/bgyoo/workspace/photos-web/next-app/public/uploads/thumbnails/test.jpg'
+            // }
             // Rename the temporary file
             fileName = `${path.parse(fileName).name}.jpg`;
             filePath = path.join(uploadsDir, fileName);
@@ -118,8 +138,11 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           fs.unlinkSync(_tmpFilePath);
 
           // Save file information to the database
+          // console.log('Saving file:', { fileName, filePath });
           const query = 'INSERT INTO images (name, path, metadata) VALUES (?, ?, ?)';
           const values = [fileName, `/uploads/${fileName}`, JSON.stringify(metadata)];
+          // console.log('Query:', query, values);
+          console.log('db', process.env.DB_HOST);
           await pool.query(query, values);
 
           console.log('Files saved:', { originalFilePath: filePath, thumbnailFilePath });
