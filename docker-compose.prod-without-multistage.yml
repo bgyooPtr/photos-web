@@ -15,7 +15,7 @@ services:
     networks:
       - photos-web
     env_file:
-      - ./next-app/.env.prod.local
+      - ./next-app/.env.local
 
   # Add more containers below (nginx, postgres, etc.)
 

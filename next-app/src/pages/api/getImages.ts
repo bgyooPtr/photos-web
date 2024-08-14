@@ -13,6 +13,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse<{ data: Image[]
       const images: Image[] = parseImageResponse(rows);
       res.status(200).json({ data: images });
     } catch (error) {
+      console.error('Error:', error);
       res.status(500).json({ data: [], message: error.message });
     }
   } else {

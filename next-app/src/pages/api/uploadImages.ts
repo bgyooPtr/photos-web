@@ -1,7 +1,7 @@
+import { NextApiRequest, NextApiResponse } from 'next';
 import { ExifTool } from 'exiftool-vendored';
 import * as formidable from 'formidable';
 import fs from 'fs';
-import { NextApiRequest, NextApiResponse } from 'next';
 import path from 'path';
 import sharp from 'sharp';
 import pool from '../../lib/db';
@@ -65,6 +65,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           const thumbnailsDir = path.join(uploadsDir, 'thumbnails');
 
           // Ensure the directories exist
+          // name: file.originalFilename
+          // path: file.filepath
+          // "/home/bgyoo/workspace/photos-web/next-app/public/uploads/ba80ffdb52272749401e66500.png"
           if (!fs.existsSync(uploadsDir)) {
             fs.mkdirSync(uploadsDir, { recursive: true });
           }
@@ -72,23 +75,21 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
             fs.mkdirSync(thumbnailsDir, { recursive: true });
           }
 
-          let fileName = file.originalFilename;
-          let filePath = path.join(uploadsDir, file.originalFilename);
+          const name = file.originalFilename;
+
+          let fileName = path.basename(file.newFilename); // <hashed-filename>.<ext>
+          let filePath = path.join(uploadsDir, fileName); // /uploads/<hashed-filename>.<ext>
+
           const thumbnailFilePath = path.join(
             thumbnailsDir,
-            `${path.basename(file.originalFilename, path.extname(file.originalFilename))}.jpg`,
+            `${path.basename(fileName, path.extname(fileName))}.jpg`, // /uploads/thumbnails/<hashed-filename>.jpg
           );
-          const _tmpFilePath = path.join(uploadsDir, 'tmp.jpg');
 
           // Extract metadata using exiftool
-          const metadata = await exiftool.read(file.filepath);
+          const metadata = await exiftool.read(filePath);
 
-          // Read the orientation
-          const orientation = metadata.Orientation;
-
-          // Rotate the image based on the orientation
           let angle = 0;
-          switch (orientation) {
+          switch (metadata.Orientation) {
             case 3:
               angle = 180;
               break;
@@ -102,45 +103,30 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
               angle = 0;
           }
 
-          // Create and save the thumbnail
-          fs.renameSync(file.filepath, _tmpFilePath);
+          // Temporary file path for raw files, rotation, etc.
+          const _tmpFilePath = path.join(uploadsDir, 'tmp.jpg');
 
-          // await exiftool.extractThumbnail(originalFilePath, _tmpFilePath);
-          await sharp(_tmpFilePath)
-            // .resize({ width: 300 }) // Change the width as per your configuration
-            .rotate(angle)
-            .toFile(thumbnailFilePath);
-
-          // Check if the file is in raw format
           const validExtensions = ['.jpg', '.jpeg', '.png', '.gif'];
-          const fileExtension = path.extname(_tmpFilePath).toLowerCase();
+          const fileExtension = path.extname(filePath).toLowerCase();
 
           if (!validExtensions.includes(fileExtension)) {
-            // Load the raw file and extract the jpg
-            await exiftool.extractJpgFromRaw(file.filepath, _tmpFilePath);
+            await exiftool.extractJpgFromRaw(filePath, _tmpFilePath);
 
-            // Saving file: {
-            //   fileName: 'test.png',
-            //   filePath: '/home/bgyoo/workspace/photos-web/next-app/public/uploads/test.png'
-            // }
-            // Files saved: {
-            //   originalFilePath: '/home/bgyoo/workspace/photos-web/next-app/public/uploads/test.png',
-            //   thumbnailFilePath: '/home/bgyoo/workspace/photos-web/next-app/public/uploads/thumbnails/test.jpg'
-            // }
             // Rename the temporary file
             fileName = `${path.parse(fileName).name}.jpg`;
             filePath = path.join(uploadsDir, fileName);
-
-            // Save the jpg file as original file
-            await sharp(_tmpFilePath).rotate(angle).toFile(filePath);
+          } else {
+            fs.renameSync(filePath, _tmpFilePath);
           }
-          // Delete the temporary file
+          await sharp(_tmpFilePath).rotate(angle).toFile(filePath);
+          await sharp(_tmpFilePath).resize({ width: 300 }).rotate(angle).toFile(thumbnailFilePath);
+
           fs.unlinkSync(_tmpFilePath);
 
           // Save file information to the database
           // console.log('Saving file:', { fileName, filePath });
           const query = 'INSERT INTO images (name, path, metadata) VALUES (?, ?, ?)';
-          const values = [fileName, `/uploads/${fileName}`, JSON.stringify(metadata)];
+          const values = [name, `/uploads/${fileName}`, JSON.stringify(metadata)];
           // console.log('Query:', query, values);
           console.log('db', process.env.DB_HOST);
           await pool.query(query, values);

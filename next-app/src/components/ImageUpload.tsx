@@ -13,7 +13,7 @@ const ImageUpload = () => {
 
     Array.from(selectedFiles).forEach((file) => {
       // if (validExtensions.includes(file.type)) {
-      formData.append('file', file);
+      formData.append('file', file as Blob);
       // }
     });
 

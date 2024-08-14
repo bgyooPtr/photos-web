@@ -1,63 +1,21 @@
+@import url(https://fonts.googleapis.com/css?family=Montserrat:500);
+
 .container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 0 2rem;
+	max-width: 100rem;
+	margin: 0 auto;
+	padding: 0 2rem 2rem;
 }
 
-.main {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  padding: 1rem 0;
+.heading {
+	font-family: "Montserrat", Arial, sans-serif;
+	font-size: 4rem;
+	font-weight: 500;
+	line-height: 1.5;
+	text-align: center;
+	padding: 3.5rem 0;
+	color: #1a1a1a;
 }
 
-.logo {
-  margin-bottom: 2rem;
-}
-
-.toolbar {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-  margin-bottom: 1rem;
-}
-
-.tags {
-  display: flex;
-  align-items: center;
-}
-
-.v-icon {
-  font-size: 24px;
-  cursor: pointer;
-}
-
-.view-switch {
-  display: flex;
-  align-items: center;
-}
-
-.cardView {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  gap: 10px;
-}
-
-.card {
-  cursor: pointer;
-}
-
-.slideView {
-  display: flex;
-  overflow-x: scroll;
-}
-
-.slide {
-  flex: 0 0 auto;
-  cursor: pointer;
-  margin-right: 10px;
+.heading span {
+	display: block;
 }
