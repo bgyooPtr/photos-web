@@ -16,6 +16,8 @@ services:
       - photos-web
     env_file:
       - ./next-app/.env.local
+    volumes:
+      - uploads:/app/uploads
 
   # Add more containers below (nginx, postgres, etc.)
 
@@ -24,3 +26,6 @@ services:
 networks:
   photos-web:
     external: true
+
+volumes:
+  uploads:

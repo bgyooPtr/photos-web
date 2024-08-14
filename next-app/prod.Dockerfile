@@ -1,12 +1,12 @@
 FROM node:18-alpine AS base
 
+# Install Perl
+RUN apk add --no-cache perl
+
 # Step 1. Rebuild the source code only when needed
 FROM base AS builder
 
 WORKDIR /app
-
-# Install Perl
-RUN apk add --no-cache perl
 
 # Install dependencies based on the preferred package manager
 COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
@@ -56,6 +56,10 @@ RUN apk add --no-cache perl
 # Don't run production as root
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
+
+# Ensure the upload directory has the correct permissions
+RUN mkdir -p /app/uploads && chown -R nextjs:nodejs /app/uploads
+
 USER nextjs
 
 COPY --from=builder /app/public ./public
@@ -64,9 +68,6 @@ COPY --from=builder /app/public ./public
 # https://nextjs.org/docs/advanced-features/output-file-tracing
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-
-# Ensure the upload directory has the correct permissions
-RUN mkdir -p /app/public/uploads && chown -R nextjs:nodejs /app/public/uploads
 
 # Environment variables must be redefined at run time
 ARG ENV_VARIABLE

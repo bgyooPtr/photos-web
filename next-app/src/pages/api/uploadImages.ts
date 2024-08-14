@@ -18,7 +18,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   console.log('Request received:', req.method.toLowerCase(), req.url);
 
   if (req.method.toLowerCase() === 'post') {
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads');
+    const uploadDir = path.join(process.cwd(), 'uploads');
 
     // Ensure the upload directory exists
     if (!fs.existsSync(uploadDir)) {
@@ -61,7 +61,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
             exiftool = new ExifTool({ taskTimeoutMillis: 5000 });
           }
 
-          const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
+          const uploadsDir = path.join(process.cwd(), 'uploads');
           const thumbnailsDir = path.join(uploadsDir, 'thumbnails');
 
           // Ensure the directories exist
