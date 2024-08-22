@@ -51,7 +51,7 @@ FROM base AS runner
 WORKDIR /app
 
 # Install Perl
-RUN apk add --no-cache perl
+# RUN apk add --no-cache perl
 
 # Don't run production as root
 RUN addgroup --system --gid 1001 nodejs
