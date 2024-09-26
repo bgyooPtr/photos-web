@@ -13,11 +13,9 @@ export const config = {
 };
 
 let exiftool = new ExifTool({ taskTimeoutMillis: 5000 });
-console.log(exiftool.read('/etc/hosts'));
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
-  console.log('Request received:', req.method.toLowerCase(), req.url);
-  const uploadsDir = path.join(process.cwd(), 'uploads');
+  const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
   if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
   }
@@ -69,10 +67,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           if (!fs.existsSync(thumbnailsDir)) {
             fs.mkdirSync(thumbnailsDir, { recursive: true });
           }
-          console.log('1');
 
           const name = file.originalFilename;
-          console.log(file.filepath);
 
           let fileName = path.basename(file.newFilename); // <hashed-filename>.<ext>
           let filePath = path.join(uploadsDir, fileName); // /uploads/<hashed-filename>.<ext>
@@ -81,9 +77,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
             thumbnailsDir,
             `${path.basename(fileName, path.extname(fileName))}.jpg`, // /uploads/thumbnails/<hashed-filename>.jpg
           );
-          console.log('fileName:', fileName);
-          console.log('filepath:', filePath);
-          console.log('thumbnailFilePath:', thumbnailFilePath);
           fs.access(filePath, fs.constants.F_OK, (err) => {
             if (err) {
               console.error('File does not exist:', filePath);
@@ -94,9 +87,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           });
 
           // Extract metadata using exiftool
-          console.log(exiftool.version().then((version) => console.log('exiftool version:', version)));
           const metadata = await exiftool.read(file.filepath);
-          console.log('2');
 
           let angle = 0;
           switch (metadata.Orientation) {
@@ -128,24 +119,17 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           } else {
             fs.renameSync(filePath, _tmpFilePath);
           }
-          console.log('3');
           await sharp(_tmpFilePath).rotate(angle).toFile(filePath);
-          console.log('4');
           await sharp(_tmpFilePath).resize({ width: 300 }).rotate(angle).toFile(thumbnailFilePath);
-          console.log('5');
 
           fs.unlinkSync(_tmpFilePath);
-          console.log('6');
 
           // Save file information to the database
-          // console.log('Saving file:', { fileName, filePath });
           const query = 'INSERT INTO images (name, path, metadata) VALUES (?, ?, ?)';
           const values = [name, `/uploads/${fileName}`, JSON.stringify(metadata)];
-          // console.log('Query:', query, values);
-          console.log('db', process.env.DB_HOST);
           await pool.query(query, values);
 
-          console.log('Files saved:', { originalFilePath: filePath, thumbnailFilePath });
+          console.debug('Files saved:', { originalFilePath: filePath, thumbnailFilePath });
         } catch (error) {
           console.error('Error processing file:', error);
           return res.status(500).json({ error: 'Error processing file' });

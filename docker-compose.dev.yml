@@ -11,18 +11,18 @@ services:
     environment:
       ENV_VARIABLE: ${ENV_VARIABLE}
       NEXT_PUBLIC_ENV_VARIABLE: ${NEXT_PUBLIC_ENV_VARIABLE}
-
-    # Set environment variables based on the .env file
-    env_file:
-      - .env
-    volumes:
-      - ./next-app/src:/app/src
-      - ./next-app/public:/app/public
     restart: always
     ports:
       - 3000:3000
     networks:
         - photos-web
+    # Set environment variables based on the .env file
+    env_file:
+      - .env
+      - ./next-app/.env.local
+    volumes:
+      - ./next-app/src:/app/src
+      - uploads:/app/public/uploads
 
   # Add more containers below (nginx, postgres, etc.)
 
@@ -31,3 +31,6 @@ services:
 networks:
   photos-web:
     external: true
+
+volumes:
+  uploads:

@@ -17,7 +17,7 @@ services:
     env_file:
       - ./next-app/.env.local
     volumes:
-      - uploads:/app/uploads
+      - uploads:/app/public/uploads
 
   # Add more containers below (nginx, postgres, etc.)
 

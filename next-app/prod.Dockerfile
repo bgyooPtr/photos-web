@@ -1,7 +1,10 @@
+# FROM node:18-bullseye AS base
 FROM node:18-alpine AS base
 
 # Install Perl
 RUN apk add --no-cache perl
+# RUN apt update
+# RUN apt install perl
 
 # Step 1. Rebuild the source code only when needed
 FROM base AS builder
@@ -57,17 +60,16 @@ WORKDIR /app
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Ensure the upload directory has the correct permissions
-RUN mkdir -p /app/uploads && chown -R nextjs:nodejs /app/uploads
+COPY --from=builder /app/public ./public
+RUN mkdir -p /app/public/uploads && chown -R nextjs:nodejs /app/public/uploads
 
 USER nextjs
-
-COPY --from=builder /app/public ./public
 
 # Automatically leverage output traces to reduce image size
 # https://nextjs.org/docs/advanced-features/output-file-tracing
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/exiftool-vendored.pl ./node_modules/exiftool-vendored.pl
 
 # Environment variables must be redefined at run time
 ARG ENV_VARIABLE

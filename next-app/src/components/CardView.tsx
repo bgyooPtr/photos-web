@@ -11,10 +11,9 @@ const CardView: React.FC<CardViewProps> = ({ images, onSelectImage }) => {
   return (
     <div className={styles.gallery}>
       {images.map((image, index) => (
-        <div className={styles['gallery-item']}>
+        <div key={index} className={styles['gallery-item']}>
           <img
             className={styles['gallery-image']}
-            key={index}
             src={image.path}
             alt={image.name}
             onClick={() => onSelectImage(image)}
