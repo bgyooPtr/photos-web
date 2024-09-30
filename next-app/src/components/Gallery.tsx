@@ -42,9 +42,7 @@ const Gallery = () => {
           <span className="v-icon">V</span>
           {/* Tag buttons here */}
         </div>
-        <div>
-          <ImageUpload />
-        </div>
+        {/* <ImageUpload /> */}
         <div className="view-switch">
           <button onClick={() => setView('card')}>Card View</button>
           <button onClick={() => setView('slide')}>Slide View</button>
